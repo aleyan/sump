@@ -1,2 +1,2 @@
 # sump
-Summarize code project for LLM consumption
+Summarize code projects for LLM consumption
