@@ -1,57 +1,61 @@
 import os
 from tree_sitter import Language, Parser
 
-PY_LANGUAGE = Language('path/to/python.so', 'python')
-TS_LANGUAGE = Language('path/to/typescript.so', 'typescript')
+# Paths to the grammar repositories
+PYTHON_GRAMMAR = 'tree-sitter-python'
+TYPESCRIPT_GRAMMAR = 'tree-sitter-typescript'
 
-def summarize_project(directory: str, include_files: tuple) -> str:
-    summary = []
+# Build the languages library
+Language.build_library(
+    'build/my-languages.so',
+    [
+        PYTHON_GRAMMAR,
+        TYPESCRIPT_GRAMMAR,
+    ]
+)
+
+# Load the languages
+PY_LANGUAGE = Language('build/my-languages.so', 'python')
+TS_LANGUAGE = Language('build/my-languages.so', 'typescript')
+
+parser = Parser()
+
+def parse_files(directory, dump_file):
     for root, _, files in os.walk(directory):
         for file in files:
-            file_path = os.path.join(root, file)
             if file.endswith(('.py', '.ts', '.tsx')):
-                summary.append(summarize_code_file(file_path))
-            elif file.endswith('.md'):
-                summary.append(include_markdown_file(file_path))
-            elif file_path in include_files:
-                summary.append(include_full_file(file_path))
-            else:
-                summary.append(f"File: {file_path}")
-    return '\n\n'.join(summary)
+                file_path = os.path.join(root, file)
+                parse_file(file_path, dump_file)
 
-def summarize_code_file(file_path: str) -> str:
+def parse_file(file_path, dump_file):
     with open(file_path, 'r') as f:
-        content = f.read()
+        code = f.read()
     
     if file_path.endswith('.py'):
-        language = PY_LANGUAGE
+        parser.set_language(PY_LANGUAGE)
     else:
-        language = TS_LANGUAGE
+        parser.set_language(TS_LANGUAGE)
     
-    parser = Parser()
-    parser.set_language(language)
-    tree = parser.parse(bytes(content, 'utf8'))
+    tree = parser.parse(bytes(code, 'utf8'))
+    root_node = tree.root_node
 
-    summary = [f"File: {file_path}"]
-    summary.extend(extract_imports(tree))
-    summary.extend(extract_classes_and_methods(tree))
-    
-    return '\n'.join(summary)
+    # Extract class definitions, method definitions, and imports
+    for node in root_node.children:
+        if node.type == 'class_definition':
+            dump_file.write(f"Class: {node.text.decode('utf8')}\n")
+        elif node.type == 'function_definition':
+            dump_file.write(f"Function: {node.text.decode('utf8')}\n")
+        elif node.type == 'import_statement':
+            dump_file.write(f"Import: {node.text.decode('utf8')}\n")
 
-def extract_imports(tree):
-    # Implement import extraction logic
-    pass
-
-def extract_classes_and_methods(tree):
-    # Implement class and method extraction logic
-    pass
-
-def include_markdown_file(file_path: str) -> str:
+def include_files(file_path, dump_file):
     with open(file_path, 'r') as f:
         content = f.read()
-    return f"File: {file_path}\n\n{content}"
+    dump_file.write(content + '\n')
 
-def include_full_file(file_path: str) -> str:
-    with open(file_path, 'r') as f:
-        content = f.read()
-    return f"File: {file_path}\n\n{content}"
+def list_other_files(directory, dump_file):
+    for root, _, files in os.walk(directory):
+        for file in files:
+            if not file.endswith(('.py', '.ts', '.tsx', '.md')):
+                file_path = os.path.join(root, file)
+                dump_file.write(f"Other file: {file_path}\n")
