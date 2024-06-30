@@ -1,7 +1,7 @@
 import os
 import tempfile
 from click.testing import CliRunner
-from sump.__main__ import main
+from sump.main import main
 
 def test_main():
     runner = CliRunner()
