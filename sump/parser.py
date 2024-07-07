@@ -103,7 +103,18 @@ def extract_class(node: Node, content: str) -> List[str]:
 
 def extract_method(node: Node, content: str) -> str:
     method_name = next(child for child in node.children if child.type == 'identifier').text.decode('utf-8')
-    return f"Method: {method_name}"
+    parameters = [
+        param.text.decode('utf-8') for param in node.children 
+        if param.type == 'parameters'
+    ]
+    return_type = next(
+        (child for child in node.children if child.type == 'type'), 
+        None
+    )
+    return_type_str = return_type.text.decode('utf-8') if return_type else 'None'
+    parameters_str = ", ".join(parameters)
+    return f"Method: {method_name}({parameters_str}) -> {return_type_str}"
+
 
 def include_markdown_file(file_path: str) -> str:
     with open(file_path, 'r') as f:
