@@ -1,21 +1,17 @@
 import os
 import click
-from .parser import parse_files, include_files, list_other_files
+from .parser import summarize_project
 
 @click.command()
-@click.argument('directory', default='.')
-@click.option('--include', multiple=True, help='List of files to include fully')
-def main(directory, include):
+@click.option('--directory', '-d', default='.', help='Directory to summarize')
+@click.option('--include', '-i', multiple=True, help='Files to include fully')
+def main(directory: str, include: tuple):
+    summary = summarize_project(directory, include)
+    
     with open('dump.txt', 'w') as dump_file:
-        # Include specified files
-        for file_path in include:
-            include_files(file_path, dump_file)
-        
-        # Parse and summarize py, ts, tsx files
-        parse_files(directory, dump_file)
-        
-        # List other files
-        list_other_files(directory, dump_file)
+        dump_file.write(summary)
+    
+    click.echo(f"Project summary written to dump.txt")
 
 if __name__ == '__main__':
     main()

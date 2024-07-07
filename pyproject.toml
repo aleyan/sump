@@ -9,7 +9,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 click = "^8.1.7"
-tree-sitter = "^0.22.3"
+tree-sitter = "0.21.3"
+tree-sitter-languages = "1.10.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
