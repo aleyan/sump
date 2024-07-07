@@ -3,7 +3,7 @@ from typing import List, Tuple
 from tree_sitter import Parser, Tree, Node
 from tree_sitter_languages import get_language, get_parser
 
-def get_parser(file_extension: str) -> Parser:
+def _get_parser(file_extension: str) -> Parser:
     if file_extension == '.py':
         language = get_language('python')
         parser = get_parser('python')
@@ -13,7 +13,7 @@ def get_parser(file_extension: str) -> Parser:
     else:
         raise ValueError(f"Unsupported file extension: {file_extension}")
     
-    parser.language = language
+    #parser.language = language
     return parser
 
 def summarize_project(directory: str, include_files: Tuple[str]) -> str:
@@ -36,7 +36,7 @@ def summarize_code_file(file_path: str) -> str:
         content = f.read()
     
     file_extension = os.path.splitext(file_path)[1]
-    parser = get_parser(file_extension)
+    parser = _get_parser(file_extension)
     tree = parser.parse(bytes(content, 'utf8'))
 
     summary = [f"File: {file_path}"]
