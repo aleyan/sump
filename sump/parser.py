@@ -1,26 +1,46 @@
 import os
 from typing import List, Tuple
 from tree_sitter import Parser, Tree, Node
-from tree_sitter_languages import get_language, get_parser
+from tree_sitter_languages import get_parser
+import fnmatch
 
 def _get_parser(file_extension: str) -> Parser:
     if file_extension == '.py':
-        language = get_language('python')
         parser = get_parser('python')
     elif file_extension in ('.ts', '.tsx'):
-        language = get_language('typescript')
         parser = get_parser('typescript')
     else:
         raise ValueError(f"Unsupported file extension: {file_extension}")
-    
-    #parser.language = language
+
     return parser
+
+def read_gitignore(directory: str) -> List[str]:
+    gitignore_path = os.path.join(directory, '.gitignore')
+    if not os.path.exists(gitignore_path):
+        return []
+    
+    with open(gitignore_path, 'r') as f:
+        return [line.strip() for line in f if line.strip() and not line.startswith('#')]
+
+def is_ignored(file_path: str, ignore_patterns: List[str], base_dir: str) -> bool:
+    rel_path = os.path.relpath(file_path, base_dir)
+
+    if rel_path.startswith('.git' + os.sep) or rel_path == '.git':
+        return True
+
+    return any(fnmatch.fnmatch(rel_path, pattern) for pattern in ignore_patterns)
+
 
 def summarize_project(directory: str, include_files: Tuple[str]) -> str:
     summary = []
+    ignore_patterns = read_gitignore(directory)
+    
     for root, _, files in os.walk(directory):
         for file in files:
             file_path = os.path.join(root, file)
+            if is_ignored(file_path, ignore_patterns, directory):
+                continue
+            
             if file.endswith(('.py', '.ts', '.tsx')):
                 summary.append(summarize_code_file(file_path))
             elif file.endswith('.md'):
