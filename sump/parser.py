@@ -41,12 +41,12 @@ def summarize_project(directory: str, include_files: Tuple[str]) -> str:
             if is_ignored(file_path, ignore_patterns, directory):
                 continue
             
+            if file_path in include_files:
+                summary.append(include_full_file(file_path))
             if file.endswith(('.py', '.ts', '.tsx')):
                 summary.append(summarize_code_file(file_path))
             elif file.endswith('.md'):
                 summary.append(include_markdown_file(file_path))
-            elif file_path in include_files:
-                summary.append(include_full_file(file_path))
             else:
                 summary.append(f"File: {file_path}")
     return '\n\n'.join(summary)
